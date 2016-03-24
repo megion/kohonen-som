@@ -24,10 +24,10 @@ public class ExampleSOM {
                 new Function<String, Vector>() {
                     public Vector call(String s) {
                         String[] sarray = s.split(" ");
-                        double[] values = new double[2];
+                        double[] values = new double[1];
 
-                        values[0] = Double.NaN;
-                        values[1] = Double.parseDouble(sarray[7]);
+                        values[0] = Double.parseDouble(sarray[0]);
+//                        values[1] = Double.NaN;
                         return Vectors.dense(values);
                     }
                 }
