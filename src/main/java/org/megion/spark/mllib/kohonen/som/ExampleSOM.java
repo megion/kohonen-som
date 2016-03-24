@@ -4,24 +4,54 @@ import org.apache.spark.api.java.*;
 import org.apache.spark.SparkConf;
 import org.apache.spark.api.java.function.Function;
 import org.apache.spark.api.java.function.Function2;
+import org.apache.spark.mllib.clustering.KMeans;
+import org.apache.spark.mllib.clustering.KMeansModel;
+import org.apache.spark.mllib.linalg.Vector;
+import org.apache.spark.mllib.linalg.Vectors;
+
+import java.util.ArrayList;
+import java.util.List;
 
 public class ExampleSOM {
 
     public static void main(String[] args) {
-        String logFile = "/home/ilya/frameworks/spark-1.6.0-bin-hadoop2.6/README.md"; // Should be some file on your system
-        SparkConf conf = new SparkConf().setAppName("Simple Application");
+        String contentFile = "/home/ilya/Documents/ml/sspy/content_data_100.cod"; // Should be some file on your system
+        SparkConf conf = new SparkConf().setAppName("K-means Example");
         JavaSparkContext sc = new JavaSparkContext(conf);
-        JavaRDD<String> logData = sc.textFile(logFile).cache();
+        JavaRDD<String> rowsData = sc.textFile(contentFile);
 
-        long numAs = logData.filter(new Function<String, Boolean>() {
-            public Boolean call(String s) { return s.contains("a"); }
-        }).count();
+        JavaRDD<Vector> parsedData = rowsData.map(
+                new Function<String, Vector>() {
+                    public Vector call(String s) {
+                        String[] sarray = s.split(" ");
+                        double[] values = new double[2];
 
-        long numBs = logData.filter(new Function<String, Boolean>() {
-            public Boolean call(String s) { return s.contains("b"); }
-        }).count();
+                        values[0] = Double.NaN;
+                        values[1] = Double.parseDouble(sarray[7]);
+                        return Vectors.dense(values);
+                    }
+                }
+        );
 
-        System.out.println("Lines with a: " + numAs + ", lines with b: " + numBs);
+        // Cluster the data into two classes using KMeans
+        int numClusters = 2;
+        int numIterations = 20;
+        KMeansModel clusters = KMeans.train(parsedData.rdd(), numClusters, numIterations);
+
+        // Evaluate clustering by computing Within Set Sum of Squared Errors
+        double WSSSE = clusters.computeCost(parsedData.rdd());
+        System.out.println("Within Set Sum of Squared Errors = " + WSSSE);
+
+
+//        long numAs = logData.filter(new Function<String, Boolean>() {
+//            public Boolean call(String s) { return s.contains("a"); }
+//        }).count();
+//
+//        long numBs = logData.filter(new Function<String, Boolean>() {
+//            public Boolean call(String s) { return s.contains("b"); }
+//        }).count();
+//
+//        System.out.println("Lines with a: " + numAs + ", lines with b: " + numBs);
 
 
 //        class ColMedian {
@@ -44,22 +74,22 @@ public class ExampleSOM {
 //        JavaRDD<Integer> lineLengths = lines.map(new CalculateMedian());
 //        ColMedian med = lineLengths.reduce(new ReduceMedian());
 
-        class GetLength implements Function<String, Integer> {
-            public Integer call(String s) {
-                return s.length();
-            }
-        }
-        class Sum implements Function2<Integer, Integer, Integer> {
-            public Integer call(Integer a, Integer b) {
-                System.out.println("Reduce a + b: " + a + " + " + b);
-                return a + b;
-            }
-        }
-
-        JavaRDD<String> lines = sc.textFile("/home/ilya/frameworks/spark-1.6.0-bin-hadoop2.6/README.md");
-        JavaRDD<Integer> lineLengths = lines.map(new GetLength());
-        int totalLength = lineLengths.reduce(new Sum());
-        System.out.println("totalLength: " + totalLength);
+//        class GetLength implements Function<String, Integer> {
+//            public Integer call(String s) {
+//                return s.length();
+//            }
+//        }
+//        class Sum implements Function2<Integer, Integer, Integer> {
+//            public Integer call(Integer a, Integer b) {
+//                System.out.println("Reduce a + b: " + a + " + " + b);
+//                return a + b;
+//            }
+//        }
+//
+//        JavaRDD<String> lines = sc.textFile(contentFile);
+//        JavaRDD<Integer> lineLengths = lines.map(new GetLength());
+//        int totalLength = lineLengths.reduce(new Sum());
+//        System.out.println("totalLength: " + totalLength);
 
         // получение треугольной квадратной матрицы ковариации
 //        List<List<Double>> squareMatrix;
