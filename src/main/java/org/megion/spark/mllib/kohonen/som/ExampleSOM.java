@@ -24,22 +24,29 @@ public class ExampleSOM {
                 new Function<String, Vector>() {
                     public Vector call(String s) {
                         String[] sarray = s.split(" ");
-                        double[] values = new double[1];
+                        double[] values = new double[2];
 
                         values[0] = Double.parseDouble(sarray[0]);
-//                        values[1] = Double.NaN;
+                        values[1] = Double.NaN; //Double.POSITIVE_INFINITY;
                         return Vectors.dense(values);
                     }
                 }
         );
+
+//        parsedData.groupBy()
 
         // Cluster the data into two classes using KMeans
         int numClusters = 2;
         int numIterations = 20;
         KMeansModel clusters = KMeans.train(parsedData.rdd(), numClusters, numIterations);
 
+
+        Vector[] centers = clusters.clusterCenters();
+//        KMeans.findClosest(centers, Vectors.dense(1.0, 2.0));
+
         // Evaluate clustering by computing Within Set Sum of Squared Errors
         double WSSSE = clusters.computeCost(parsedData.rdd());
+//        clusters.
         System.out.println("Within Set Sum of Squared Errors = " + WSSSE);
 
 
