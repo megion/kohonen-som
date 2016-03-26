@@ -8,6 +8,7 @@ import org.apache.spark.mllib.clustering.KMeans;
 import org.apache.spark.mllib.clustering.KMeansModel;
 import org.apache.spark.mllib.linalg.Vector;
 import org.apache.spark.mllib.linalg.Vectors;
+import org.apache.spark.sql.hive.HiveContext;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -15,7 +16,8 @@ import java.util.List;
 public class ExampleSOM {
 
     public static void main(String[] args) {
-        String contentFile = "/home/ilya/Documents/ml/sspy/content_data_100.cod"; // Should be some file on your system
+//        String contentFile = "/home/ilya/Documents/ml/sspy/content_data_100.cod"; // Should be some file on your system
+        String contentFile = "/user/ilya/content_data_100.cod"; // Should be some file on your system
         SparkConf conf = new SparkConf().setAppName("K-means Example");
         JavaSparkContext sc = new JavaSparkContext(conf);
         JavaRDD<String> rowsData = sc.textFile(contentFile);
@@ -24,10 +26,10 @@ public class ExampleSOM {
                 new Function<String, Vector>() {
                     public Vector call(String s) {
                         String[] sarray = s.split(" ");
-                        double[] values = new double[2];
+                        double[] values = new double[1];
 
                         values[0] = Double.parseDouble(sarray[0]);
-                        values[1] = Double.NaN; //Double.POSITIVE_INFINITY;
+//                        values[1] = Double.NaN; //Double.POSITIVE_INFINITY;
                         return Vectors.dense(values);
                     }
                 }
@@ -48,6 +50,9 @@ public class ExampleSOM {
         double WSSSE = clusters.computeCost(parsedData.rdd());
 //        clusters.
         System.out.println("Within Set Sum of Squared Errors = " + WSSSE);
+
+        HiveContext sqlContext = new HiveContext(sc);
+        sqlContext.sql("CREATE TABLE IF NOT EXISTS stb_summary (min_val Decimal)");
 
 
 //        long numAs = logData.filter(new Function<String, Boolean>() {
